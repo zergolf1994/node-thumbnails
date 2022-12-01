@@ -16,6 +16,8 @@ const mergeImg = require("merge-img");
 const shell = require("shelljs");
 const Jimp = require("jimp");
 
+const { SettingValue } = require("../modules/Function");
+
 module.exports = async (req, res) => {
   const { slug } = req.query;
 
@@ -36,6 +38,12 @@ module.exports = async (req, res) => {
     table_c = [],
     links = [],
     linksY = [];
+
+  let { domain_thumbnails } = await SettingValue(true);
+
+  if(!domain_thumbnails){
+    return res.json({ status: false, msg: "not_domain_thumbnails" });
+  }
 
   const g_folder = "1gHVDkmoXtAYQ-hHro175eXyNmV3L-vEq";
 
@@ -186,11 +194,11 @@ module.exports = async (req, res) => {
     } else {
       await uploadImage();
       await uploadVtt();
-      let gid = await getVttDrive();
-      let data_create = {};
+      //let gid = await getVttDrive();
+      //let data_create = {};
       data_create.slug = slug;
       data_create.type = "vtt";
-      data_create.backup = gid;
+      data_create.backup = slug;
 
       await FilesThumb.create(data_create);
 
@@ -238,8 +246,11 @@ module.exports = async (req, res) => {
     for (const images of linksY) {
       let file_image = path.join(imgdir, `${file_slug}-${images}`);
       let status_image = path.join(imgdir, `${images}.txt`);
-      await gDriveUp(
+     /* await gDriveUp(
         `sudo -u root gdrive upload --parent ${g_folder} ${file_image} >> ${status_image} 2>&1`
+      );*/
+      await gDriveUp(
+        `sudo -u root curl -F "fileToUpload=@${file_image}" ${domain_thumbnails}/upload.php >> ${status_image} 2>&1`
       );
     }
     return true;
@@ -248,8 +259,11 @@ module.exports = async (req, res) => {
     console.log(`${file_slug} Upload Vtt`);
     let file_vtt = path.join(imgdir, `${file_slug}.vtt`);
     let status_vtt = path.join(imgdir, `vtt-upload.txt`);
-    return await gDriveUp(
+    /*return await gDriveUp(
       `sudo -u root gdrive upload --parent ${g_folder} ${file_vtt} >> ${status_vtt} 2>&1`
+    );*/
+    await gDriveUp(
+      `sudo -u root curl -F "fileToUpload=@${file_vtt}" ${domain_thumbnails}/upload.php >> ${status_vtt} 2>&1`
     );
   }
   async function getVttDrive() {

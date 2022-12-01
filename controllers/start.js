@@ -9,7 +9,7 @@ const FilesVideo = require("../modules/Mysql/Files");
 const FilesThumb = require("../modules/Mysql/FilesThumb");
 const { Sequelize, Op } = require("sequelize");
 const shell = require("shelljs");
-const { GenerateID } = require("../modules/Function");
+const { SettingValue, GenerateID } = require("../modules/Function");
 
 module.exports = async (req, res) => {
   const { sv_ip, slug } = req.query;
@@ -18,6 +18,11 @@ module.exports = async (req, res) => {
     let where = {},
       notslug = [];
     //server
+    let { domain_thumbnails } = await SettingValue(true);
+
+    if (!domain_thumbnails) {
+      return res.json({ status: false, msg: "not_domain_thumbnails" });
+    }
     const server = await Servers.findOne({
       raw: true,
       attributes: ["id"],
